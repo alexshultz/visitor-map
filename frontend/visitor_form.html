@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Museum Visitor Form</title>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+<h1>Visitor Information Form</h1>
+<form action="/submit" method="post">
+    <label for="city">City:</label>
+    <input type="text" id="city" name="city" placeholder="Enter city">
+    <br><br>
+    <label for="state">State:</label>
+    <input type="text" id="state" name="state" placeholder="Enter state" value="KS">
+    <br><br>
+    <label for="number">Number of Visitors:</label>
+    <input type="number" id="number" name="number" value="1" min="1">
+    <small id="numberError" style="color: red; display: none;">Please enter a natural number (1, 2, 3, ...).</small>
+    <br><br>
+    <div id="highNumberCheck" style="display: none;">
+        <input type="checkbox" id="highNumber" name="highNumber">
+        <label for="highNumber">Accept high number of visitors</label>
+    </div>
+    <br><br>
+    <label for="date">Date of Visit:</label>
+    <input type="date" id="date" name="date">
+    <br><br>
+    <input type="checkbox" id="yesterday" name="yesterday">
+    <label for="yesterday">Yesterday's Date</label>
+    <br><br>
+    <label for="country">Country:</label>
+    <input type="text" id="country" name="country" value="US">
+    <br><br>
+    <button type="submit" id="submitButton">Submit</button>
+    <button type="reset" id="resetButton">Reset</button>
+    <div id="submissionSummary" style="margin-top: 20px; color: green;"></div>
+</form>
+
+
+<script>
+$(document).ready(function() {
+    function getLocalDate(offsetDays = 0) {
+        var today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize to midnight to avoid timezone issues
+        var localOffset = today.getTimezoneOffset() * 60000;
+        var localDate = new Date(today.getTime() - localOffset);
+        localDate.setDate(localDate.getDate() + offsetDays);
+        return localDate.toISOString().split('T')[0];
+    }
+
+    function resetForm() {
+        $('form')[0].reset(); // Reset the form fields to their initial values
+        $('#date').val(getLocalDate()).prop('disabled', false).focus(); // Reset the date, enable it, and focus
+        validateNumber();
+        $('#yesterday').prop('checked', false); // Ensure 'Yesterday' checkbox is unchecked
+    }
+
+    function validateNumber() {
+        var number = $('#number').val();
+        var isValid = number > 0 && Math.floor(number) == number;
+        $('#numberError').toggle(!isValid);
+        $('#submitButton').prop('disabled', !isValid);
+        $('#highNumberCheck').css('display', isValid && number >= 10 ? 'block' : 'none');
+        $('#highNumber').prop('checked', false);
+    }
+
+    $('#number').on('input', validateNumber);
+    $('#highNumber').on('change', validateNumber);
+
+    const $dateInput = $('#date');
+    const $yesterdayCheckbox = $('#yesterday');
+
+    $dateInput.val(getLocalDate()); // Initially set the date
+
+    $yesterdayCheckbox.on('change', function() {
+        $dateInput.val(this.checked ? getLocalDate(-1) : getLocalDate());
+    });
+
+    $dateInput.on('change', function() {
+        $yesterdayCheckbox.prop('checked', false);
+    });
+
+    $('form').on('submit', function(e) {
+        e.preventDefault();
+        var formData = $(this).serialize();
+        $.ajax({
+            url: '/submit',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                $('#submissionSummary').text("Last submitted data: " + JSON.stringify(response));
+                resetForm(); // Reset the form using the custom reset function
+            },
+            error: function() {
+                $('#submissionSummary').text('Error submitting form. Please try again.');
+            }
+        });
+    });
+
+	$('#resetButton').on('click', function() {
+		location.reload(); // This will refresh the page, resetting all forms
+	});
+});
+</script>
+</body>
+</html>
+

@@ -1,0 +1,85 @@
+import unittest
+from unittest.mock import patch, mock_open
+from src.services.kml_manager import KMLManager
+
+
+class TestKMLManager(unittest.TestCase):
+
+    def setUp(self):
+        # Initialize the KMLManager instance before each test
+        self.kml_manager = KMLManager(directory="fake/directory")
+
+    @patch('builtins.open', new_callable=mock_open, create=True)
+    @patch('os.path.join', return_value="fake/directory/data_20210101120000.kml")
+    @patch('datetime.datetime')
+    def test_write_kml_data(self, mock_datetime, mock_join, mock_file):
+        # Mock the datetime to control the output filename
+        mock_datetime.now.return_value.strftime.return_value = '20210101120000'
+
+        # Call the function under test
+        self.kml_manager.write_kml_data(38.27312, -98.5821872)
+
+        # Assertions to check that the file is created with the correct content
+        handle = mock_file()
+        expected_content = """<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+    <Placemark>
+        <Point>
+            <coordinates>-98.5821872,38.27312</coordinates>
+        </Point>
+    </Placemark>
+</Document>
+</kml>
+"""
+        handle.write.assert_called_once_with(expected_content)
+
+    @patch('glob.glob', return_value=["fake/directory/data_20210101120000.kml"])
+    @patch('builtins.open', new_callable=mock_open)  # Ensure mock_open is correctly set up
+    @patch('os.remove')
+    def test_merge_well_formed_kml_files(self, mock_remove, mock_file, mock_glob):
+        # Call the function under test
+        self.kml_manager.merge_kml_files()
+
+        # Validate that the open function was called correctly
+        # First for the data file in 'r' mode, then for the static file in 'a' mode
+        mock_file.assert_has_calls([
+            unittest.mock.call("fake/directory/static_data.kml", 'a'),
+            unittest.mock.call().__enter__(),
+            unittest.mock.call("fake/directory/data_20210101120000.kml", 'r'),
+            unittest.mock.call().__enter__(),
+            unittest.mock.call().readlines(),
+            unittest.mock.call().__exit__(None, None, None),
+            unittest.mock.call().__exit__(None, None, None)
+        ])
+
+        # Verify the removal of the processed file
+        mock_remove.assert_called_with("fake/directory/data_20210101120000.kml")
+
+    @patch('glob.glob', return_value=["fake/directory/data_20210101120100.kml"])
+    @patch('builtins.open', new_callable=mock_open)
+    @patch('os.remove')
+    def test_merge_empty_kml_files(self, mock_remove, mock_file, mock_glob):
+        self.kml_manager.merge_kml_files()
+
+        # Expected that no data will be written to the static file
+        handles = mock_file.return_value
+        handles.write.assert_not_called()
+        # Check file handling
+        mock_remove.assert_called_with("fake/directory/data_20210101120100.kml")
+
+    @patch('glob.glob', return_value=["fake/directory/data_20210101120200.kml"])
+    @patch('builtins.open', new_callable=mock_open)
+    @patch('os.remove')
+    def test_merge_malformed_kml_files(self, mock_remove, mock_file, mock_glob):
+        self.kml_manager.merge_kml_files()
+
+        # Expect no write operations due to malformed content
+        handles = mock_file.return_value
+        handles.write.assert_not_called()
+        # Verify removal
+        mock_remove.assert_called_with("fake/directory/data_20210101120200.kml")
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -1,0 +1,70 @@
+{
+  "frontend_testing": {
+    "purpose": {
+      "core": "To ensure robust functionality of the data collection form by validating user input and preventing incorrect data submission.",
+      "future": "To provide a foundation for testing any additional JavaScript components developed for the project."
+    },
+    "prerequisites": {
+      "node_js": {
+        "what": "A JavaScript runtime environment that allows you to execute JavaScript code outside of a web browser.",
+        "why": "Needed to run your JavaScript test files and manage dependencies for the testing environment."
+      },
+      "npm_or_yarn": {
+        "what": "Package managers that come bundled with Node.js by default.",
+        "why": "Used to install the testing framework and any other libraries you might need."
+      },
+      "conda_environment": {
+        "what": "A virtual environment tool that creates isolated spaces for your project's dependencies.",
+        "why": {
+          "isolation": "Prevents conflicts between different projects' dependencies or globally installed packages.",
+          "versioning": "Allows you to pin specific versions of Node.js and other libraries for consistency.",
+          "portability": "Makes it easier to replicate your project's setup with exact dependencies on other machines."
+        },
+        "how": "Instructions for installing Miniconda/Anaconda and creating an environment."
+      }
+    },
+    "setup": {
+      "folders": {
+        "src/frontend_components": {
+          "purpose": "Holds the JavaScript code for your data collection form and other frontend components."
+        },
+        "tests/frontend_components": {
+          "purpose": "Dedicated location for all frontend test files.",
+          "rationale": "Mirrors the source code structure for organization and maintainability."
+        }
+      },
+      "npm_init": {
+        "command": "npm init -y",
+        "where": "Run in both 'src/frontend_components' and 'tests/frontend_components' directories.",
+        "why": "Creates a 'package.json' file in each folder, which is a configuration file for managing project dependencies within that context."
+      },
+      "framework_install": {
+        "example": "npm install --save-dev jest",
+        "explanation": {
+          "save_dev": "Installs the testing framework (Jest in this case) as a development dependency, not a production dependency."
+        },
+        "alternatives": "List other popular frameworks (Mocha, Jasmine) with links to their documentation."
+      },
+      "test_files": {
+        "extension": ".js (or .jsx, .tsx if using React, etc.)",
+        "location": "Create within the 'tests/frontend_components' directory.",
+        "structure": "Refer to the specific documentation of your chosen testing framework for the syntax of writing test cases."
+      },
+      "run_tests": {
+        "activate_conda": "If using Conda, run 'conda activate <environment_name>' first.",
+        "command": "jest (or the command specific to your framework)",
+        "where": "Navigate to the 'tests/frontend_components' directory."
+      }
+    },
+    "notes": {
+      "dom_manipulation": {
+        "necessity": "You might need a library to simulate the browser environment and interact with form elements within your tests.",
+        "libraries": "List options like 'jsdom' or framework-specific testing libraries (e.g., React Testing Library)."
+      },
+      "frontend_frameworks": {
+        "specialized_tools": "Frameworks like React, Vue, and Angular often have associated testing libraries and recommended practices.",
+        "importance": "Research the best testing strategy for your chosen frontend framework."
+      }
+    }
+  }
+}

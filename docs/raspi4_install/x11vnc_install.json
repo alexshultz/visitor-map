@@ -1,0 +1,108 @@
+{
+  "instructions": [
+    {
+      "step": 1,
+      "description": "Update the package list and upgrade the installed packages to their latest versions:",
+      "commands": [
+        "sudo apt update",
+        "sudo apt upgrade"
+      ]
+    },
+    {
+      "step": 2,
+      "description": "Install the x11vnc package:",
+      "commands": [
+        "sudo apt install x11vnc"
+      ]
+    },
+    {
+      "step": 3,
+      "description": "Create a new configuration file for x11vnc:",
+      "commands": [
+        "sudo nano /etc/x11vnc.conf"
+      ],
+      "fileContent": [
+        "# Set the display to be shared",
+        "display :0",
+        "",
+        "# Set the password for VNC access",
+        "passwd your_password",
+        "",
+        "# Enable shared memory support",
+        "shared",
+        "",
+        "# Enable multi-threaded operation",
+        "threads",
+        "",
+        "# Enable remote pointer events",
+        "forever",
+        "",
+        "# Disable screen blanking",
+        "noxdamage",
+        "",
+        "# Disable screen saver and power management",
+        "noxfixes",
+        "",
+        "# Enable remote keyboard events",
+        "repeat",
+        "",
+        "# Set the frame rate (optional)",
+        "rfbrate 30",
+        "",
+        "# Set the quality (optional)",
+        "quality 80"
+      ],
+      "note": "Replace 'your_password' with a strong password for VNC access."
+    },
+    {
+      "step": 4,
+      "description": "Create a new systemd service file to start x11vnc at boot:",
+      "commands": [
+        "sudo nano /etc/systemd/system/x11vnc.service"
+      ],
+      "fileContent": [
+        "[Unit]",
+        "Description=Start x11vnc at startup",
+        "After=multi-user.target",
+        "",
+        "[Service]",
+        "Type=simple",
+        "ExecStart=/usr/bin/x11vnc -auth guess -config /etc/x11vnc.conf",
+        "Restart=on-failure",
+        "RestartSec=5",
+        "",
+        "[Install]",
+        "WantedBy=multi-user.target"
+      ]
+    },
+    {
+      "step": 5,
+      "description": "Reload the systemd daemon to pick up the new service file:",
+      "commands": [
+        "sudo systemctl daemon-reload"
+      ]
+    },
+    {
+      "step": 6,
+      "description": "Enable the x11vnc service to start at boot:",
+      "commands": [
+        "sudo systemctl enable x11vnc.service"
+      ]
+    },
+    {
+      "step": 7,
+      "description": "Start the x11vnc service:",
+      "commands": [
+        "sudo systemctl start x11vnc.service"
+      ],
+      "note": "The x11vnc server should now be running and accessible."
+    },
+    {
+      "step": 8,
+      "description": "To connect to the x11vnc server from another device, you'll need a VNC client. Open the VNC client and enter the following address:",
+      "address": "your_raspberry_pi_ip:5900",
+      "note": "Replace 'your_raspberry_pi_ip' with the IP address of your Raspberry Pi. You will be prompted for the password you set in the x11vnc configuration file."
+    }
+  ],
+  "note": "Make sure you have a desktop environment (such as LXDE or XFCE) installed and running on your DietPi system for x11vnc to work properly."
+}

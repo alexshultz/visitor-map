@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Map with Clustering</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v9.1.0/ol.css" type="text/css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@v9.1.0/dist/ol.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map" class="map"></div>
+    <script>
+        var socket = io.connect(); // Connects to the server that served this page
+
+        var clusterDistance = 15; // Set the cluster distance here
+        var initialZoom = 5; // Set the initial zoom level
+        var initialCenterLongitude = -96.6480642; // Set the initial longitude
+        var initialCenterLatitude = 39.84173; // Set the initial latitude
+        var basePinDiameter = 6; // Set the diameter of the base size of the pin
+        var pinMultiplier = 5; // Adjusts how quickly the pin size increases
+        var basePinBorderWidth = 0; // Set the border width of the pin
+
+        // Define the calculateRadius function
+        function calculateRadius(size, basePinDiameter, pinMultiplier) {
+            const baseSize = basePinDiameter; // Minimum radius for the smallest cluster
+            const multiplier = pinMultiplier; // Adjusts how quickly the cluster size increases
+
+            // Calculate radius using an inverse logarithmic scale
+            // We use Math.max to avoid logarithm of 0 which is -Infinity
+            const radius = Math.min(baseSize + (multiplier * Math.log(Math.max(size, 1))), basePinDiameter * 2);
+            return radius;
+        }
+
+        var geojsonSource = new ol.source.Vector({
+            url: '/data/geojson?' + new Date().getTime(), // This ensures each request is unique to prevent caching
+            format: new ol.format.GeoJSON()
+        });
+
+        var clusterSource = new ol.source.Cluster({
+            distance: clusterDistance,  // Adjust clustering distance as needed
+            source: geojsonSource
+        });
+
+        var map = new ol.Map({
+            target: 'map',
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM()
+                }),
+                new ol.layer.Vector({
+                    source: clusterSource,
+                    style: function(feature) {
+                        var size = feature.get('features').length;
+                        var radius = calculateRadius(size, basePinDiameter, pinMultiplier);
+                        return new ol.style.Style({
+                            image: new ol.style.Circle({
+                                radius: radius,  // Use the dynamically calculated radius
+                                fill: new ol.style.Fill({color: 'rgba(255, 153, 0, 0.8)'}),
+                                //stroke: new ol.style.Stroke({color: '#fff', width: basePinBorderWidth})
+                            }),
+                            text: new ol.style.Text({
+                                text: size.toString(),
+                                fill: new ol.style.Fill({color: '#fff'})
+                            })
+                        });
+                    }
+                })
+            ],
+            view: new ol.View({
+                center: ol.proj.fromLonLat([initialCenterLongitude, initialCenterLatitude]),
+                zoom: 5
+            })
+        });
+
+        socket.on('connect', function() {
+            console.log('Websocket connected!');
+        });
+
+        socket.on('update_map', function(msg) {
+            console.log('Received update_map event:', msg);
+            clusterSource.refresh(); // Directly refresh the cluster source
+            console.log('Cluster source refreshed.');
+        });
+
+        socket.on('disconnect', function() {
+            console.log('Disconnected from server');
+        });
+    </script>
+</body>
+</html>
