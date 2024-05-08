@@ -1,6 +1,5 @@
 import requests
 
-
 class GeoLocator:
     def __init__(self, base_url="https://nominatim.openstreetmap.org/search", user_agent="Pony Express Barn and Museum Visitor Map"):
         self.base_url = base_url

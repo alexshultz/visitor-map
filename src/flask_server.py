@@ -1,4 +1,5 @@
 from flask import Flask, request, render_template, jsonify, send_from_directory, abort
+from flask_socketio import SocketIO, emit
 from datetime import datetime, timedelta, timezone
 from services.geolocation import GeoLocator
 from services.kml_manager import KMLManager
@@ -6,6 +7,8 @@ from services.GeoJSONManager import GeoJSONManager
 import os
 
 app = Flask(__name__, template_folder='../frontend')
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app)
 geo_locator = GeoLocator(user_agent='Pony Express Barn and Museum Visitor Map')
 kml_manager = KMLManager()  # Instantiate the KMLManager
 
@@ -25,28 +28,48 @@ def submit():
             geo_manager.append_geojson_feature(latitude, longitude, date, city, state, country, display_name)
             kml_manager = KMLManager()
             kml_manager.append_kml_placemark(latitude, longitude, date, city, state, country, display_name)
+            # Trigger the update map event to all connected clients
+            socketio.emit('update_map', {'data': 'new_data_available'}, namespace='/')
             return jsonify({"message": "Data added successfully", "summary": summary})
         else:
             return jsonify({"message": "Data not added", "summary": summary})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@socketio.on('connect')
+def test_connect():
+    print('Client connected')
+
+@socketio.on('disconnect')
+def test_disconnect():
+    print('Client disconnected')
+
+@app.route('/update_data')
+def update_data():
+    # Assume this endpoint is hit whenever new data is available
+    socketio.emit('update_map', {'data': 'new_data_available'})
+    return jsonify(success=True)
 
 @app.route("/data/geojson")
 def serve_geojson():
     directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../data/geojson')  # Adjust path as necessary
     filename = 'current_data.geojson'
     try:
-        # Using send_from_directory to ensure secure file serving
-        return send_from_directory(directory, filename, as_attachment=False)
+        response = send_from_directory(directory, filename, as_attachment=False)
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'  # Prevent caching
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
     except FileNotFoundError:
         abort(404)  # If the file is not found, return a 404 error
 
+@app.route('/test')
+def test():
+    return render_template('test.html')
 
 @app.route("/map")
 def show_map():
     return render_template("map.html")
-
 
 @app.route("/")
 def form():
@@ -137,4 +160,4 @@ def validate_date(input_date, yesterday_flag):
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(debug=True)

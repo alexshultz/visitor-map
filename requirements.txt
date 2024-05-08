@@ -2,4 +2,4 @@ requests
 flask
 flask-socketio
 openlayer
-gunicorn
+python-socketio

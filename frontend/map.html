@@ -90,12 +90,23 @@
 
         socket.on('update_map', function(msg) {
             console.log('Received update_map event:', msg);
-            clusterSource.refresh(); // Directly refresh the cluster source
-            console.log('Cluster source refreshed.');
-        });
+            // Rebuild the source to force update
+            var newGeoJsonSource = new ol.source.Vector({
+                url: '/data/geojson?' + new Date().getTime(),  // Ensure unique URL for each request
+                format: new ol.format.GeoJSON()
+            });
 
-        socket.on('disconnect', function() {
-            console.log('Disconnected from server');
+            // Find the cluster layer and update its source
+            var clusterLayer = map.getLayers().getArray().find(layer => layer instanceof ol.layer.Vector);
+            if (clusterLayer) {
+                clusterLayer.setSource(new ol.source.Cluster({
+                    distance: 40,
+                    source: newGeoJsonSource
+                }));
+                console.log('Cluster source refreshed.');
+            } else {
+                console.log('Cluster layer not found.');
+            }
         });
     </script>
 </body>
