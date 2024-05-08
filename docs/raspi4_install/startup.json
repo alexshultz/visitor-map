@@ -1,0 +1,79 @@
+{
+  "description": "Automatically start Flask application on DietPi using systemd",
+  "steps": [
+    {
+      "step": "Create a systemd Service File",
+      "details": "Create a new file named visitor-map.service in the /etc/systemd/system/ directory. Use sudo to edit files in this directory."
+    },
+    {
+      "step": "Edit the Service File",
+      "details": {
+        "content": "[Unit]\nDescription=Visitor Map Application\nAfter=network.target\n\n[Service]\nUser=dietpi\nWorkingDirectory=/home/dietpi/visitor-map\nExecStart=/bin/bash /home/dietpi/start_visitor_map_server.sh\nRestart=always\n\n[Install]\nWantedBy=multi-user.target",
+        "notes": "Adjust paths and user as necessary."
+      }
+    },
+    {
+      "step": "Enable and Start the Service",
+      "commands": [
+        {
+          "command": "sudo systemctl daemon-reload",
+          "purpose": "Reloads systemd manager configuration."
+        },
+        {
+          "command": "sudo systemctl enable visitor-map.service",
+          "purpose": "Enables the service to start on boot."
+        },
+        {
+          "command": "sudo systemctl start visitor-map.service",
+          "purpose": "Starts the service immediately."
+        }
+      ]
+    },
+    {
+      "step": "Check the Service Status",
+      "commands": [
+        {
+          "command": "sudo systemctl status visitor-map.service",
+          "purpose": "Checks the status of the service."
+        },
+        {
+          "command": "journalctl -u visitor-map.service",
+          "purpose": "Checks the logs for the service if there are any issues."
+        }
+      ]
+    }
+  ]
+}
+
+
+
+
+{
+  "instructions": [
+    {
+      "title": "Create a systemd Service File",
+      "steps": [
+        {
+          "action": "Create a new file",
+          "details": "Name the file flaskapp.service and place it in the /etc/systemd/system/ directory."
+        },
+        {
+          "action": "Open the file",
+          "details": "Use a text editor with sudo privileges to edit files in this directory."
+        }
+      ]
+    },
+    {
+      "title": "Edit the Service File",
+      "steps": [
+        {
+          "action": "Add configuration to the file",
+          "details": {
+            "configuration": "[Unit]\nDescription=Flask Application\nAfter=network.target\n\n[Service]\nUser=dietpi\nWorkingDirectory=/home/dietpi/visitor-map\nExecStart=/bin/bash /home/dietpi/start_server.sh\nRestart=always\n\n[Install]\nWantedBy=multi-user.target",
+            "note": "Adjust the paths and user to match the location of your start_server.sh script and the user on your DietPi system."
+          }
+        }
+      ]
+    }
+  ]
+}
